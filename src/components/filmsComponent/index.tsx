@@ -1,82 +1,52 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { IFilm } from "../../types/films";
-import { Card, Descriptions, Input, List, Spin, Tabs, Typography } from "antd";
-import TabPane from "antd/es/tabs/TabPane";
+import {
+  Card,
+  Descriptions,
+  Input,
+  Modal,
+  Spin,
+  Typography,
+  Button,
+} from "antd";
 import { useFetchPaginate } from "../../hooks/useFetchPaginate";
-import { useNavigate } from "react-router-dom";
 
 export const FilmsComponent: React.FC = () => {
   const {
     data: films,
     loading,
-    totalData,
     searchQuery,
-    selectedData,
     handleSearch,
-    handleRowClick,
-    handleModalClose,
-    fetchDataById,
   } = useFetchPaginate("films");
 
-  const [activeTab, setActiveTab] = useState<{ [filmId: string]: string }>({});
-  const [itemNames, setItemNames] = useState<{
-    [filmId: string]: { [url: string]: string };
-  }>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [resourceData, setResourceData] = useState<any[]>([]);
+  const [fetchingResource, setFetchingResource] = useState(false);
 
-  const fetchDataForTab = useCallback(
-    async (filmId: string, dataType: string, urls: string[]) => {
-      const names: { [url: string]: string } = { ...itemNames[filmId] };
-      await Promise.all(
-        urls.map(async (itemUrl) => {
-          const idMatch = itemUrl.match(/\/(\d+)\/$/);
-          const id = idMatch ? idMatch[1] : null;
-          if (id && !names[itemUrl]) {
-            const itemData = await fetchDataById(dataType, id);
-            if (itemData && itemData.name) {
-              names[itemUrl] = itemData.name;
-            }
-          }
-        })
+  const handleOpenModal = async (title: string, urls: string[]) => {
+    setModalVisible(true);
+    setModalTitle(title);
+    setFetchingResource(true);
+    try {
+      const resourcePromises = urls.map((url) =>
+        fetch(url).then((response) => response.json())
       );
-
-      setItemNames((prev) => ({ ...prev, [filmId]: names }));
-    },
-    [fetchDataById, itemNames]
-  );
-
-  const handleTabChange = (filmId: string, key: string) => {
-    const tabMapping: { [key: string]: string } = {
-      "1": "characters",
-      "2": "planets",
-      "3": "species",
-      "4": "starships",
-      "5": "vehicles",
-    };
-    const dataType = tabMapping[key];
-    setActiveTab((prev) => ({ ...prev, [filmId]: dataType }));
-
-    const urls = films.find(
-      (film: IFilm) => film.episode_id.toString() === filmId
-    )?.[dataType as keyof (typeof films)[0]] as unknown as string[];
-
-    if (urls) {
-      fetchDataForTab(
-        filmId,
-        dataType === "characters" ? "people" : dataType,
-        urls
-      );
+      const data = await Promise.all(resourcePromises);
+      setResourceData(data);
+    } catch (error) {
+      console.error("Erro ao buscar dados do recurso:", error);
+      setResourceData([]);
+    } finally {
+      setFetchingResource(false);
     }
   };
 
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (films.length > 0) {
-      films.forEach((film: IFilm) => {
-        handleTabChange(film.episode_id.toString(), "1");
-      });
-    }
-  }, [films]);
+  // Fechar o modal e limpar os dados
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setResourceData([]);
+  };
 
   return (
     <>
@@ -100,7 +70,13 @@ export const FilmsComponent: React.FC = () => {
           >
             {films.map((film: IFilm) => (
               <React.Fragment key={film.episode_id}>
-                <Descriptions column={1} bordered>
+                <Descriptions
+                  style={{
+                    marginBottom: 16,
+                  }}
+                  column={1}
+                  bordered
+                >
                   <Descriptions.Item label="Título">
                     {film.title}
                   </Descriptions.Item>
@@ -121,46 +97,78 @@ export const FilmsComponent: React.FC = () => {
                       {film.opening_crawl}
                     </Typography.Paragraph>
                   </Descriptions.Item>
-                </Descriptions>
-                <Tabs
-                  defaultActiveKey="1"
-                  style={{ marginTop: 16, marginBottom: 16 }}
-                  onChange={(key) =>
-                    handleTabChange(film.episode_id.toString(), key)
-                  }
-                >
-                  {[
-                    { type: "characters", key: "1" },
-                    { type: "planets", key: "2" },
-                    { type: "species", key: "3" },
-                    { type: "starships", key: "4" },
-                    { type: "vehicles", key: "5" },
-                  ].map(({ type, key }) => (
-                    <TabPane
-                      tab={type.charAt(0).toUpperCase() + type.slice(1)}
-                      key={key}
+                  <Descriptions.Item label="Recursos">
+                    <Button
+                      type="link"
+                      onClick={() =>
+                        handleOpenModal("Personagens", film.characters)
+                      }
                     >
-                      <List
-                        dataSource={
-                          Array.isArray(film[type as keyof typeof film])
-                            ? (film[type as keyof typeof film] as string[])
-                            : []
-                        }
-                        renderItem={(itemUrl) => (
-                          <List.Item>
-                            <Typography.Link>
-                              {itemNames[film.episode_id]?.[itemUrl] ||
-                                "Carregando..."}
-                            </Typography.Link>
-                          </List.Item>
-                        )}
-                      />
-                    </TabPane>
-                  ))}
-                </Tabs>
+                      Personagens
+                    </Button>
+                    <Button
+                      type="link"
+                      onClick={() => handleOpenModal("Planetas", film.planets)}
+                    >
+                      Planetas
+                    </Button>
+                    <Button
+                      type="link"
+                      onClick={() =>
+                        handleOpenModal("Naves Estelares", film.starships)
+                      }
+                    >
+                      Naves Estelares
+                    </Button>
+                    <Button
+                      type="link"
+                      onClick={() => handleOpenModal("Veículos", film.vehicles)}
+                    >
+                      Veículos
+                    </Button>
+                    <Button
+                      type="link"
+                      onClick={() => handleOpenModal("Espécies", film.species)}
+                    >
+                      Espécies
+                    </Button>
+                  </Descriptions.Item>
+                </Descriptions>
               </React.Fragment>
             ))}
           </Card>
+
+          <Modal
+            title={modalTitle}
+            visible={modalVisible}
+            onCancel={handleCloseModal}
+            footer={null}
+          >
+            {fetchingResource ? (
+              <Spin
+                size="large"
+                style={{ display: "flex", justifyContent: "center" }}
+              />
+            ) : (
+              <Descriptions column={1} bordered>
+                {resourceData.map((resource, index) => (
+                  <Descriptions.Item
+                    key={index}
+                    label={resource.name || "Detalhe"}
+                  >
+                    {Object.entries(resource).map(([key, value]) => (
+                      <p key={key}>
+                        <strong>{key}:</strong>{" "}
+                        {typeof value === "string"
+                          ? value
+                          : JSON.stringify(value)}
+                      </p>
+                    ))}
+                  </Descriptions.Item>
+                ))}
+              </Descriptions>
+            )}
+          </Modal>
         </>
       )}
     </>

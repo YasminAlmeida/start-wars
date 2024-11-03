@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useFetchPaginate } from "../../hooks/useFetchPaginate";
 import { IVehicles } from "../../types/vehicles";
-import { Card, Descriptions, Input, List, Spin, Tabs, Typography } from "antd";
-import TabPane from "antd/es/tabs/TabPane";
+import { Card, Descriptions, Input, Spin, Modal, Button } from "antd";
 
 export const VehiclesComponent: React.FC = () => {
   const {
@@ -10,58 +9,36 @@ export const VehiclesComponent: React.FC = () => {
     loading,
     searchQuery,
     handleSearch,
-    handleRowClick,
-    fetchDataById,
   } = useFetchPaginate("vehicles");
 
-  const [activeTab, setActiveTab] = useState<{ [vehiclesId: string]: string }>(
-    {}
-  );
-  const [itemNames, setItemNames] = useState<{
-    [vehiclesId: string]: { [url: string]: string };
-  }>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [resourceData, setResourceData] = useState<any[]>([]);
+  const [fetchingResource, setFetchingResource] = useState(false);
 
-  const fetchDataForTab = useCallback(
-    async (vehiclesId: string, dataType: string, urls: string[]) => {
-      const names: { [url: string]: string } = { ...itemNames[vehiclesId] };
-      await Promise.all(
-        urls.map(async (itemUrl) => {
-          const idMatch = itemUrl.match(/\/(\d+)\/$/);
-          const id = idMatch ? idMatch[1] : null;
-          if (id && !names[itemUrl]) {
-            const itemData = await fetchDataById(dataType, id);
-            if (itemData && itemData.name) {
-              names[itemUrl] = itemData.name;
-            }
-          }
-        })
+  const handleOpenModal = async (title: string, urls: string[]) => {
+    setModalVisible(true);
+    setModalTitle(title);
+    setFetchingResource(true);
+    try {
+      const resourcePromises = urls.map((url) =>
+        fetch(url).then((response) => response.json())
       );
-
-      setItemNames((prev) => ({ ...prev, [vehiclesId]: names }));
-    },
-    [fetchDataById, itemNames]
-  );
-
-  const handleTabChange = (vehiclesId: string, key: string) => {
-    const tabMapping: { [key: string]: string } = {
-      "1": "pilots",
-      "2": "films",
-    };
-    const dataType = tabMapping[key];
-    setActiveTab((prev) => ({ ...prev, [vehiclesId]: dataType }));
-
-    const urls = vehicles.find(
-      (vehicles: IVehicles) => vehicles.url.toString() === vehiclesId
-    )?.[dataType as keyof (typeof vehicles)[0]] as unknown as string[];
-
-    if (urls) {
-      fetchDataForTab(
-        vehiclesId,
-        dataType === "pilots" ? "people" : dataType,
-        urls
-      );
+      const data = await Promise.all(resourcePromises);
+      setResourceData(data);
+    } catch (error) {
+      console.error("Erro ao buscar dados do recurso:", error);
+      setResourceData([]);
+    } finally {
+      setFetchingResource(false);
     }
   };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setResourceData([]);
+  };
+
   return (
     <>
       {loading ? (
@@ -78,14 +55,14 @@ export const VehiclesComponent: React.FC = () => {
             defaultValue={searchQuery}
           />
           <Card
-            title={"Informações dos Veiculos da Saga Star Wars"}
+            title="Informações dos Veículos da Saga Star Wars"
             bordered={false}
             style={{ width: "100%" }}
           >
             {vehicles.map((vehicle: IVehicles) => (
               <React.Fragment key={vehicle.url}>
-                <Descriptions column={1} bordered>
-                  <Descriptions.Item label="Name">
+                <Descriptions column={1} bordered style={{ marginBottom: 16 }}>
+                  <Descriptions.Item label="Nome">
                     {vehicle.name}
                   </Descriptions.Item>
                   <Descriptions.Item label="Capacidade de Carga">
@@ -100,13 +77,13 @@ export const VehiclesComponent: React.FC = () => {
                   <Descriptions.Item label="Tripulação">
                     {vehicle.crew}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Tamanho do Veiculo">
+                  <Descriptions.Item label="Tamanho do Veículo">
                     {vehicle.length}
                   </Descriptions.Item>
                   <Descriptions.Item label="Manufatura">
                     {vehicle.manufacturer}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Maxima Velocidade Atmosferica">
+                  <Descriptions.Item label="Máxima Velocidade Atmosférica">
                     {vehicle.max_atmosphering_speed}
                   </Descriptions.Item>
                   <Descriptions.Item label="Modelo">
@@ -115,55 +92,64 @@ export const VehiclesComponent: React.FC = () => {
                   <Descriptions.Item label="Passageiros">
                     {vehicle.passengers}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Classe de Veiculo">
+                  <Descriptions.Item label="Classe de Veículo">
                     {vehicle.vehicle_class}
                   </Descriptions.Item>
-                </Descriptions>
-
-                <Tabs
-                  defaultActiveKey="1"
-                  style={{ marginTop: 16, marginBottom: 16 }}
-                  onChange={(key) =>
-                    handleTabChange(vehicle.url.toString(), key)
-                  }
-                >
-                  {[
-                    { type: "pilots", key: "1" },
-                    { type: "films", key: "2" },
-                  ].map((type, key) => (
-                    <TabPane
-                      tab={
-                        type.type.charAt(0).toUpperCase() + type.type.slice(1)
-                      }
-                      key={key}
-                    >
-                      <List
-                        dataSource={
-                          Array.isArray(
-                            vehicle[type.type as keyof typeof vehicle]
-                          )
-                            ? (vehicle[
-                                type.type as keyof typeof vehicle
-                              ] as string[])
-                            : []
+                  <Descriptions.Item label="Recursos">
+                    {vehicle.pilots.length > 0 && (
+                      <Button
+                        type="link"
+                        onClick={() =>
+                          // @ts-ignore
+                          handleOpenModal("Pilotos", vehicle.pilots)
                         }
-                        renderItem={(itemUrl) => (
-                          <List.Item>
-                            <Typography.Link
-                              onClick={() => handleRowClick(itemUrl)}
-                            >
-                              {itemNames[vehicle.url.toString()]?.[itemUrl] ||
-                                itemUrl}
-                            </Typography.Link>
-                          </List.Item>
-                        )}
-                      />
-                    </TabPane>
-                  ))}
-                </Tabs>
+                      >
+                        Pilotos
+                      </Button>
+                    )}
+                    <Button
+                      type="link"
+                      onClick={() => handleOpenModal("Filmes", vehicle.films)}
+                    >
+                      Filmes
+                    </Button>
+                  </Descriptions.Item>
+                </Descriptions>
               </React.Fragment>
             ))}
           </Card>
+
+          <Modal
+            title={modalTitle}
+            visible={modalVisible}
+            onCancel={handleCloseModal}
+            footer={null}
+          >
+            {fetchingResource ? (
+              <Spin
+                size="large"
+                style={{ display: "flex", justifyContent: "center" }}
+              />
+            ) : (
+              <Descriptions column={1} bordered>
+                {resourceData.map((resource, index) => (
+                  <Descriptions.Item
+                    key={index}
+                    label={resource.name || "Detalhe"}
+                  >
+                    {Object.entries(resource).map(([key, value]) => (
+                      <p key={key}>
+                        <strong>{key}:</strong>{" "}
+                        {typeof value === "string"
+                          ? value
+                          : JSON.stringify(value)}
+                      </p>
+                    ))}
+                  </Descriptions.Item>
+                ))}
+              </Descriptions>
+            )}
+          </Modal>
         </>
       )}
     </>

@@ -36,15 +36,6 @@ export const useFetchPaginate = (url: string) => {
         queryFn: fetchPaginate
     });
 
-    const fetchDataById = async (dataType: string, id: string) => {
-        try {
-            const response = await api.get(`/${dataType}/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-            throw error;
-        }
-    };
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
@@ -72,6 +63,5 @@ export const useFetchPaginate = (url: string) => {
         fetchPaginate,
         handleRowClick,
         handleModalClose,
-        fetchDataById,
     };
 };

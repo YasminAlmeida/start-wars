@@ -1,70 +1,42 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useFetchPaginate } from "../../hooks/useFetchPaginate";
 import { IStarship } from "../../types/starships";
-import { Card, Descriptions, Input, Spin, Tabs } from "antd";
-import TabPane from "antd/es/tabs/TabPane";
-import { List } from "antd/lib";
+import { Card, Descriptions, Input, Spin, Modal, Button } from "antd";
 
 export const StarshipsComponent: React.FC = () => {
   const {
     data: starships,
     loading,
-    totalData,
     searchQuery,
-    selectedData,
     handleSearch,
-    handleRowClick,
-    handleModalClose,
-    fetchDataById,
   } = useFetchPaginate("starships");
 
-  const [activeTab, setActiveTab] = useState<{ [starshipId: string]: string }>(
-    {}
-  );
-  const [itemNames, setItemNames] = useState<{
-    [starshipId: string]: { [url: string]: string };
-  }>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [resourceData, setResourceData] = useState<any[]>([]);
+  const [fetchingResource, setFetchingResource] = useState(false);
 
-  const fetchDataForTab = useCallback(
-    async (starshipId: string, dataType: string, urls: string[]) => {
-      const names: { [url: string]: string } = { ...itemNames[starshipId] };
-      await Promise.all(
-        urls.map(async (itemUrl) => {
-          const idMatch = itemUrl.match(/\/(\d+)\/$/);
-          const id = idMatch ? idMatch[1] : null;
-          if (id && !names[itemUrl]) {
-            const itemData = await fetchDataById(dataType, id);
-            if (itemData && itemData.name) {
-              names[itemUrl] = itemData.name;
-            }
-          }
-        })
+  const handleOpenModal = async (title: string, urls: string[]) => {
+    setModalVisible(true);
+    setModalTitle(title);
+    setFetchingResource(true);
+    try {
+      const resourcePromises = urls.map((url) =>
+        fetch(url).then((response) => response.json())
       );
-
-      setItemNames((prev) => ({ ...prev, [starshipId]: names }));
-    },
-    [fetchDataById, itemNames]
-  );
-
-  const handleTabChange = (starshipId: string, key: string) => {
-    const tabMapping: { [key: string]: string } = {
-      "1": "films",
-      "2": "pilots",
-    };
-    const dataType = tabMapping[key];
-    setActiveTab((prev) => ({ ...prev, [starshipId]: dataType }));
-
-    const urls = starships.find(
-      (starship: IStarship) => starship.name.toString() === starshipId
-    )?.[dataType as keyof (typeof starships)[0]] as unknown as string[];
-
-    if (urls) {
-      fetchDataForTab(
-        starshipId,
-        dataType === "pilots" ? "people" : dataType,
-        urls
-      );
+      const data = await Promise.all(resourcePromises);
+      setResourceData(data);
+    } catch (error) {
+      console.error("Erro ao buscar dados do recurso:", error);
+      setResourceData([]);
+    } finally {
+      setFetchingResource(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setResourceData([]);
   };
 
   return (
@@ -83,10 +55,14 @@ export const StarshipsComponent: React.FC = () => {
             defaultValue={searchQuery}
           />
 
-          <Card title="Starships" bordered={false} style={{ width: "100%" }}>
+          <Card
+            title="Naves Estelares"
+            bordered={false}
+            style={{ width: "100%" }}
+          >
             {starships.map((starship: IStarship) => (
               <React.Fragment key={starship.url}>
-                <Descriptions column={1} bordered>
+                <Descriptions column={1} bordered style={{ marginBottom: 16 }}>
                   <Descriptions.Item label="Nome">
                     {starship.name}
                   </Descriptions.Item>
@@ -102,7 +78,7 @@ export const StarshipsComponent: React.FC = () => {
                   <Descriptions.Item label="Consumiveis">
                     {starship.consumables}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Cost in credits">
+                  <Descriptions.Item label="Custo em créditos">
                     {starship.cost_in_credits}
                   </Descriptions.Item>
                   <Descriptions.Item label="Criado">
@@ -129,42 +105,61 @@ export const StarshipsComponent: React.FC = () => {
                   <Descriptions.Item label="Classe">
                     {starship.starship_class}
                   </Descriptions.Item>
-                </Descriptions>
-                <Tabs
-                  defaultActiveKey="1"
-                  style={{ marginTop: 16, marginBottom: 16 }}
-                  onChange={(key) =>
-                    handleTabChange(starship.name.toString(), key)
-                  }
-                >
-                  {[
-                    { type: "films", key: "1" },
-                    { type: "pilots", key: "2" },
-                  ].map((tab) => (
-                    <TabPane tab={tab.type} key={tab.key}>
-                      <List
-                        header={<div>{tab.type}</div>}
-                        bordered
-                        dataSource={
-                          starship[
-                            tab.type as keyof typeof starship
-                          ] as string[]
+                  <Descriptions.Item label="Recursos">
+                    <Button
+                      type="link"
+                      onClick={() => handleOpenModal("Filmes", starship.films)}
+                    >
+                      Filmes
+                    </Button>
+                    {starship.pilots.length > 0 && (
+                      <Button
+                        type="link"
+                        onClick={() =>
+                          // @ts-ignore
+                          handleOpenModal("Pilotos", starship.pilots)
                         }
-                        renderItem={(item) => (
-                          <List.Item
-                            onClick={() => handleRowClick(item)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            {itemNames[starship.name]?.[item] || item}
-                          </List.Item>
-                        )}
-                      />
-                    </TabPane>
-                  ))}
-                </Tabs>
+                      >
+                        Pilotos
+                      </Button>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
               </React.Fragment>
             ))}
           </Card>
+
+          <Modal
+            title={modalTitle}
+            visible={modalVisible}
+            onCancel={handleCloseModal}
+            footer={null}
+          >
+            {fetchingResource ? (
+              <Spin
+                size="large"
+                style={{ display: "flex", justifyContent: "center" }}
+              />
+            ) : (
+              <Descriptions column={1} bordered>
+                {resourceData.map((resource, index) => (
+                  <Descriptions.Item
+                    key={index}
+                    label={resource.name || "Detalhe"}
+                  >
+                    {Object.entries(resource).map(([key, value]) => (
+                      <p key={key}>
+                        <strong>{key}:</strong>{" "}
+                        {typeof value === "string"
+                          ? value
+                          : JSON.stringify(value)}
+                      </p>
+                    ))}
+                  </Descriptions.Item>
+                ))}
+              </Descriptions>
+            )}
+          </Modal>
         </>
       )}
     </>
