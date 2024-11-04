@@ -23,7 +23,6 @@ export const SideBar: React.FC<ISideBarProps> = ({
   const [visible, setVisible] = useState(false);
   const navigate = useNavigate();
 
-  // Detectar se é mobile
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth <= 768);

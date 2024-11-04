@@ -51,7 +51,6 @@
   <li>Clone o repositório:</li>
 </ol>
 <pre><code>git clone &lt;URL_DO_REPOSITORIO&gt;
-cd 
 </code></pre>
 
 <ol start="2">
