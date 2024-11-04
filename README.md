@@ -1,46 +1,78 @@
-# Getting Started with Create React App
+<h1>Projeto Star Wars API</h1>
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<p>Este projeto é uma aplicação <strong>React</strong> desenvolvida com <strong>TypeScript</strong> para capturar e exibir dados do universo Star Wars, fornecidos pela <a href="https://swapi.dev/" target="_blank">API do Star Wars</a>. O objetivo é apresentar esses dados de maneira intuitiva, com funcionalidades que permitem ao usuário interagir, filtrar e buscar informações.</p>
 
-## Available Scripts
+<h2>Índice</h2>
+<ul>
+  <li><a href="#sobre-o-projeto">Sobre o Projeto</a></li>
+  <li><a href="#tecnologias-utilizadas">Tecnologias Utilizadas</a></li>
+  <li><a href="#funcionalidades">Funcionalidades</a></li>
+  <li><a href="#configuração-do-projeto">Configuração do Projeto</a></li>
+  <li><a href="#scripts-disponíveis">Scripts Disponíveis</a></li>
+  <li><a href="#deploy-na-aws">Deploy na AWS</a></li>
+  <li><a href="#acesso-ao-projeto">Acesso ao Projeto</a></li>
+</ul>
 
-In the project directory, you can run:
+<h2 id="sobre-o-projeto">Sobre o Projeto</h2>
 
-### `npm start`
+<p>O projeto consome a <strong>API do Star Wars</strong> para obter dados e exibi-los em uma interface que faz uso do <strong>Ant Design</strong> para uma experiência de usuário moderna. A aplicação oferece uma interface onde o usuário pode:</p>
+<ul>
+  <li>Visualizar listas de personagens, filmes, planetas, espécies, naves e veículos</li>
+  <li>Interagir com tabelas e modais para obter detalhes de cada item</li>
+  <li>Utilizar filtros e botões de ação para explorar os dados</li>
+</ul>
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+<h2 id="tecnologias-utilizadas">Tecnologias Utilizadas</h2>
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+<p>As principais tecnologias e bibliotecas usadas neste projeto incluem:</p>
+<ul>
+  <li><strong>React</strong> e <strong>TypeScript</strong>: Linguagem principal e base para construção da interface.</li>
+  <li><strong>Ant Design</strong>: Biblioteca de componentes para UI, incluindo tabelas, modais, botões, inputs de busca e paginação.</li>
+  <li><strong>Axios</strong>: Utilizado para capturar dados da API.</li>
+  <li><strong>React Query</strong>: Gerenciamento de estado assíncrono e cache de dados da API, permitindo uma experiência de usuário mais rápida e eficiente.</li>
+  <li><strong>AWS S3 e CloudFront</strong>: Armazenamento e distribuição do conteúdo para o deploy.</li>
+</ul>
 
-### `npm test`
+<h2 id="funcionalidades">Funcionalidades</h2>
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<p>A aplicação conta com as seguintes funcionalidades:</p>
+<ul>
+  <li>Consulta e visualização dos dados de Star Wars a partir da API.</li>
+  <li>Filtros interativos e botões de ação para facilitar a navegação.</li>
+  <li>Busca dinâmica para encontrar itens específicos.</li>
+  <li>Exibição de tabelas paginadas com detalhes acessíveis via modais.</li>
+  <li>Responsividade para diferentes dispositivos.</li>
+</ul>
 
-### `npm run build`
+<h2 id="configuração-do-projeto">Configuração do Projeto</h2>
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+<p>Para executar o projeto localmente, siga os passos abaixo:</p>
+<ol>
+  <li>Clone o repositório:</li>
+</ol>
+<pre><code>git clone &lt;URL_DO_REPOSITORIO&gt;
+cd 
+</code></pre>
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+<ol start="2">
+  <li>Instale as dependências:</li>
+</ol>
+<pre><code>npm install
+</code></pre>
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+<h2 id="scripts-disponíveis">Scripts Disponíveis</h2>
 
-### `npm run eject`
+<p>No diretório do projeto, você pode executar:</p>
+<ul>
+  <li><code>npm start</code>: Inicia o projeto em modo de desenvolvimento.</li>
+  <li><code>npm run build</code>: Compila o projeto para produção.</li>
+</ul>
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+<h2 id="deploy-na-aws">Deploy na AWS</h2>
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+<p>O projeto foi implantado na AWS, utilizando o S3 e o CloudFront para hospedagem e distribuição.</p
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+<h2 id="acesso-ao-projeto">Acesso ao Projeto</h2>
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+<p>Acesse a aplicação pela URL do CloudFront:</p>
+<p><strong>URL:</strong> <a href="http://d2wrui38f4509q.cloudfront.net/" target="_blank">https://xyz123.cloudfront.net</a></p>
